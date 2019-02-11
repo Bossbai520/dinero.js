@@ -277,6 +277,22 @@ describe('Dinero', () => {
     test('should throw when destination currency is not valid', async () => {
       await expect(Dinero({ amount: 500 }).convert('EURO')).rejects.toThrow()
     })
+    test('should return a new converted Dinero object when passed a promise instead of an API endpoint', async () => {
+      const res = await Dinero({ amount: 500 }).convert('EUR', {
+        endpoint: new Promise(resolve =>
+          resolve({
+            rates: {
+              EUR: 0.81162
+            }
+          })
+        ),
+        propertyPath: 'rates.{{to}}'
+      })
+      expect(res.toObject()).toMatchObject({
+        amount: 406,
+        currency: 'EUR'
+      })
+    })
   })
   describe('#equalsTo()', () => {
     test('should return true when both amount and currencies are equal', () => {
