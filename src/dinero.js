@@ -427,7 +427,7 @@ const Dinero = options => {
      *
      * @param  {String} currency - The destination currency, expressed as an {@link https://en.wikipedia.org/wiki/ISO_4217#Active_codes ISO 4217 currency code}.
      * @param  {(String|Promise)} options.endpoint - The API endpoint to retrieve exchange rates. You can substitute this with a promise that resolves to the exchanges rates if you already have them.
-     * @param  {String} options.propertyPath - The property path to the rate.
+     * @param  {String} [options.propertyPath='rates.{{to}}'] - The property path to the rate.
      * @param  {Object} [options.headers] - The HTTP headers to provide, if needed.
      * @param  {String} [options.roundingMode='HALF_EVEN'] - The rounding mode to use: `'HALF_ODD'`, `'HALF_EVEN'`, `'HALF_UP'`, `'HALF_DOWN'`, `'HALF_TOWARDS_ZERO'` or `'HALF_AWAY_FROM_ZERO'`.
      *
@@ -452,6 +452,7 @@ const Dinero = options => {
      *   })
      * @example
      * // usage with exchange rates provided as a custom promise
+     * // using the default `propertyPath` format (so it doesn't have to be specified)
      * const rates = {
      *   rates: {
      *     EUR: 0.81162
@@ -460,8 +461,7 @@ const Dinero = options => {
      *
      * Dinero({ amount: 500 })
      *   .convert('EUR', {
-     *     endpoint: new Promise(resolve => resolve(rates)),
-     *     propertyPath: 'rates.{{to}}'
+     *     endpoint: new Promise(resolve => resolve(rates))
      *   })
      * @example
      * // usage with Promise.prototype.then and Promise.prototype.catch
@@ -482,8 +482,24 @@ const Dinero = options => {
      *
      * @return {Promise}
      */
-    convert(currency, options) {
-      options = Object.assign({}, globalExchangeRatesApi, options)
+    convert(
+      currency,
+      {
+        endpoint = globalExchangeRatesApi.endpoint,
+        propertyPath = globalExchangeRatesApi.propertyPath || 'rates.{{to}}',
+        headers = globalExchangeRatesApi.headers,
+        roundingMode = globalRoundingMode
+      } = {}
+    ) {
+      const options = Object.assign(
+        {},
+        {
+          endpoint,
+          propertyPath,
+          headers,
+          roundingMode
+        }
+      )
       return CurrencyConverter(options)
         .getExchangeRate(this.getCurrency(), currency)
         .then(rate => {
